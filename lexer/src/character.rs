@@ -37,10 +37,26 @@ impl Character {
         .contains(&self.c)
     }
 
+    pub fn is_splitter(&self) -> bool {
+        self.c == '、'
+    }
+
+    pub fn is_operator(&self) -> bool {
+        [
+            '+', '-', '*', '/', '%', '=', '>', '<', '=', '!', '&', '|', '＋', 'ー', '×', '÷', '％',
+            '＞', '＜', '＝', '！', '＆', '｜',
+        ]
+        .contains(&self.c)
+    }
+
     /// 文字が'（'か判定します
     /// '（'のブロックは改行を無視する必要があり
     pub fn is_cacco(&self) -> bool {
         self.c == '（'
+    }
+
+    pub fn is_cocca(&self) -> bool {
+        self.c == '）'
     }
 
     /// エスケープ文字か判定します
@@ -56,9 +72,9 @@ impl Character {
             ' ',
         ]
         .contains(&self.c)
+            || self.is_operator()
+            || self.is_splitter()
     }
-
-    ///
 
     /// 文字を取得します
     pub fn take(self) -> char {

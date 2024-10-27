@@ -5,3 +5,6 @@ edition = "2021"
 
 [workspace]
 members = ["lexer", "parser"]
+
+[dependencies]
+regex = "1.11.1"

@@ -1,0 +1,105 @@
+use std::str::FromStr;
+use crate::*;
+
+grammar;
+
+pub Satori: ast::Satori = {
+    <start: TalkStart> "\r"? "\n" <contents: TalkContent*> BlockEnd? => ast::Satori {
+        talk: vec![ast::Talk {
+            start,
+            contents,
+        }],
+        word_group: vec![],
+    },
+    // <label: WordGroupStart> "\r"? "\n" <contents: WordGroupContent*> => ast::WordGroup {
+    //     label,
+    //     contents,
+    // },
+}
+
+TalkStart: ast::TalkStart = {
+    "\r"? "\n"? "＊" <label: Expression> "\t" <cond: Expression> => ast::TalkStart {
+        label: Some(label),
+        condition: Some(cond)
+    },
+}
+
+TalkContent: ast::Expression = {
+    "："? <expr: Expression> "\r"? "\n"? => expr,
+}
+
+BlockEnd:() = {
+    "＊" => (),
+    "＠" => ()
+}
+
+// WordGroupStart: ast::Expression = {
+//     "\n"* "＠" <expr: Expression> =>  expr,
+// }
+
+// WordGroupContent: ast::Expression = {
+//     <expr: Expression> "\r"? "\n"? => expr,
+// }
+
+Expression: ast::Expression = {
+    <lhs: Expression> <op: "＋"> <rhs: Term> => ast::Expression::Binary(ast::BinaryExpression {
+        lhs: Box::new(lhs),
+        op: ast::Op::Plus,
+        rhs: rhs,
+    }),
+    <term: Term> => ast::Expression::Term(term),
+}
+
+Term: ast::Term = {
+    <lhs: Term> <op: "＝＝"> <rhs: Factor> => ast::Term::Binary(ast::BinaryTerm {
+        lhs: Box::new(lhs),
+        op: ast::Op::Equal,
+        rhs: rhs,
+    }),
+    <factor: Factor> => ast::Term::Factor(factor),
+}
+
+Factor: ast::Factor = {
+    "（" <expr: Expression> "）" => ast::Factor::Expression(Box::new(expr)),
+    <ident: "identifier"> => ast::Factor::String(ident.to_string()),
+    <num: "number"> => ast::Factor::Number(num),
+}
+
+Op: ast::Op = {
+    "＋" => ast::Op::Plus,
+    // "－" => ast::Op::Minus,
+    // "×" => ast::Op::Mul,
+    // "／" => ast::Op::Div,
+    // "％" => ast::Op::Mod,
+    "＝＝" => ast::Op::Equal,
+    // "＞" => (),
+    // "＜" => (),
+    // "≧" => (),
+    // "≦" => (),
+}
+
+
+extern {
+    type Location = usize;
+    type Error = LexicalError;
+
+    enum Token {
+        " " => Token::Space,
+        "\t" => Token::Tab,
+        "\r" => Token::CarriageReturn,
+        "\n" => Token::LineFeed,
+        "＊" => Token::Asterisk,
+        "：" => Token::Colon,
+        "＠" => Token::At,
+        "＝＝" => Token::Equal,
+        "＋" => Token::Plus,
+        // "－" => Token::Minus,
+        // "×" => Token::Mul,
+        // "／" => Token::Div,
+        // "％" => Token::Mod,
+        "（" => Token::Cacco,
+        "）" => Token::Cocca,
+        "identifier" => Token::Identifier(<String>),
+        "number" => Token::Number(<f32>),
+    }
+}
